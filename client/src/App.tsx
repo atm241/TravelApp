@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import Explore from "@/pages/explore";
 import Trips from "@/pages/trips";
 import TripDetail from "@/pages/trip-detail";
+import Saved from "@/pages/saved";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/explore" component={Explore} />
       <Route path="/trips" component={Trips} />
       <Route path="/trips/:id" component={TripDetail} />
+      <Route path="/saved" component={Saved} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -2,10 +2,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { Header } from "@/components/header";
 import { TripPlanner } from "@/components/trip-planner";
+import { TripMap } from "@/components/trip-map";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, MapPin, Share2, Edit } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Calendar, MapPin, Share2, Edit, Map, List } from "lucide-react";
 import { Link } from "wouter";
 import type { Trip, TripItem } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -206,14 +208,49 @@ export default function TripDetail() {
           </CardHeader>
         </Card>
 
-        {/* Trip Planner */}
-        <TripPlanner
-          tripId={tripId}
-          tripItems={tripItems}
-          onAddItem={handleAddItem}
-          onUpdateItem={handleUpdateItem}
-          onDeleteItem={handleDeleteItem}
-        />
+        {/* Trip Content with Tabs */}
+        <Tabs defaultValue="itinerary" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="itinerary" className="flex items-center gap-2">
+              <List className="w-4 h-4" />
+              Itinerary
+            </TabsTrigger>
+            <TabsTrigger value="map" className="flex items-center gap-2">
+              <Map className="w-4 h-4" />
+              Map & Recommendations
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="itinerary">
+            <TripPlanner
+              tripId={tripId}
+              tripItems={tripItems}
+              onAddItem={handleAddItem}
+              onUpdateItem={handleUpdateItem}
+              onDeleteItem={handleDeleteItem}
+            />
+          </TabsContent>
+
+          <TabsContent value="map">
+            <TripMap
+              destination={trip?.destination || ""}
+              tripItems={tripItems}
+              onAddRecommendation={(item) => {
+                // Convert recommendation to trip item
+                const newItem = {
+                  tripId: tripId,
+                  title: item.name || item.title,
+                  description: item.description,
+                  day: Math.max(...tripItems.map(ti => ti.day), 0) + 1,
+                  time: "",
+                  order: 1,
+                  type: "activity"
+                };
+                handleAddItem(newItem);
+              }}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
