@@ -31,6 +31,8 @@ type TripFormData = {
 
 export default function Trips() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [suggestedActivities, setSuggestedActivities] = useState<Activity[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -94,6 +96,33 @@ export default function Trips() {
       isPublic: false,
     },
   });
+
+  const watchDescription = watch("description");
+
+  useEffect(() => {
+    const getSuggestions = async () => {
+      if (watchDescription && watchDescription.length > 20) {
+        setIsLoadingSuggestions(true);
+        try {
+          const response = await apiRequest("POST", "/api/similar-activities", {
+            description: watchDescription
+          });
+          const activities = await response.json();
+          setSuggestedActivities(activities);
+        } catch (error) {
+          console.error("Failed to get activity suggestions:", error);
+          setSuggestedActivities([]);
+        } finally {
+          setIsLoadingSuggestions(false);
+        }
+      } else {
+        setSuggestedActivities([]);
+      }
+    };
+
+    const timeoutId = setTimeout(getSuggestions, 1000); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [watchDescription]);
 
   const onSubmit = (data: TripFormData) => {
     createTripMutation.mutate(data);
@@ -199,9 +228,35 @@ export default function Trips() {
                   <Label htmlFor="description">Description (Optional)</Label>
                   <Textarea
                     id="description"
-                    placeholder="Tell us about your trip..."
+                    placeholder="Tell us about your trip... (AI will suggest activities based on your description)"
                     {...register("description")}
                   />
+                  
+                  {/* AI Activity Suggestions */}
+                  {isLoadingSuggestions && (
+                    <div className="mt-2 p-3 bg-purple-50 rounded-lg border">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-purple-600 animate-pulse" />
+                        <span className="text-sm text-purple-700">Finding relevant activities...</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {suggestedActivities.length > 0 && (
+                    <div className="mt-2 p-3 bg-purple-50 rounded-lg border">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="w-4 h-4 text-purple-600" />
+                        <span className="text-sm font-medium text-purple-700">Suggested Activities</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {suggestedActivities.map((activity) => (
+                          <Badge key={activity.id} variant="secondary" className="text-xs">
+                            {activity.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-2">
