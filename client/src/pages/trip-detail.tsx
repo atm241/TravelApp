@@ -3,11 +3,12 @@ import { useRoute } from "wouter";
 import { Header } from "@/components/header";
 import { TripPlanner } from "@/components/trip-planner";
 import { TripMap } from "@/components/trip-map";
+import { AIRecommendationsPanel } from "@/components/ai-recommendations-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, MapPin, Share2, Edit, Map, List } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Share2, Edit, Map, List, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import type { Trip, TripItem } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -210,14 +211,18 @@ export default function TripDetail() {
 
         {/* Trip Content with Tabs */}
         <Tabs defaultValue="itinerary" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="itinerary" className="flex items-center gap-2">
               <List className="w-4 h-4" />
               Itinerary
             </TabsTrigger>
+            <TabsTrigger value="ai-recommendations" className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              AI Suggestions
+            </TabsTrigger>
             <TabsTrigger value="map" className="flex items-center gap-2">
               <Map className="w-4 h-4" />
-              Map & Recommendations
+              Map & Explore
             </TabsTrigger>
           </TabsList>
 
@@ -228,6 +233,24 @@ export default function TripDetail() {
               onAddItem={handleAddItem}
               onUpdateItem={handleUpdateItem}
               onDeleteItem={handleDeleteItem}
+            />
+          </TabsContent>
+
+          <TabsContent value="ai-recommendations">
+            <AIRecommendationsPanel
+              tripId={tripId}
+              onAddRecommendation={(title, description, type) => {
+                const newItem = {
+                  tripId: tripId,
+                  title: title,
+                  description: description,
+                  day: Math.max(...tripItems.map(ti => ti.day), 0) + 1,
+                  time: "",
+                  order: 1,
+                  type: type
+                };
+                handleAddItem(newItem);
+              }}
             />
           </TabsContent>
 

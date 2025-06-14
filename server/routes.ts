@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTripSchema, insertTripItemSchema } from "@shared/schema";
+import { generateTripRecommendations, findSimilarActivities } from "./ai-recommendations";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -197,6 +198,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete trip item" });
+    }
+  });
+
+  // AI Recommendations routes
+  app.post("/api/trips/:id/ai-recommendations", async (req, res) => {
+    try {
+      const tripId = parseInt(req.params.id);
+      const trip = await storage.getTrip(tripId);
+      
+      if (!trip) {
+        return res.status(404).json({ message: "Trip not found" });
+      }
+
+      const recommendations = await generateTripRecommendations(
+        trip.destination,
+        trip.description || "",
+        trip.startDate,
+        trip.endDate
+      );
+
+      res.json(recommendations);
+    } catch (error) {
+      console.error("AI recommendations error:", error);
+      res.status(500).json({ message: "Failed to generate recommendations" });
+    }
+  });
+
+  app.post("/api/similar-activities", async (req, res) => {
+    try {
+      const { description } = req.body;
+      
+      if (!description || typeof description !== "string") {
+        return res.status(400).json({ message: "Description is required" });
+      }
+
+      const similarActivities = await findSimilarActivities(description);
+      res.json(similarActivities);
+    } catch (error) {
+      console.error("Similar activities error:", error);
+      res.status(500).json({ message: "Failed to find similar activities" });
     }
   });
 
