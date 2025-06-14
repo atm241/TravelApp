@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -90,3 +91,23 @@ export type InsertTrip = z.infer<typeof insertTripSchema>;
 
 export type TripItem = typeof tripItems.$inferSelect;
 export type InsertTripItem = z.infer<typeof insertTripItemSchema>;
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  trips: many(trips),
+}));
+
+export const tripsRelations = relations(trips, ({ one, many }) => ({
+  user: one(users, {
+    fields: [trips.userId],
+    references: [users.id],
+  }),
+  tripItems: many(tripItems),
+}));
+
+export const tripItemsRelations = relations(tripItems, ({ one }) => ({
+  trip: one(trips, {
+    fields: [tripItems.tripId],
+    references: [trips.id],
+  }),
+}));
