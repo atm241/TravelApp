@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Calendar, MapPin, Share2, Edit, Map, List, Sparkles } from "lucide-react";
 import { Link } from "wouter";
-import type { Trip, TripItem } from "@shared/schema";
+import type { Trip, TripItem } from "@shared";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -181,7 +181,26 @@ export default function TripDetail() {
                   </div>
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-2" />
-                    {format(new Date(trip.startDate), "MMM dd")} - {format(new Date(trip.endDate), "MMM dd, yyyy")}
+                    {(() => {
+                      try {
+                        if (trip.startDate && trip.endDate) {
+                          const startDate = new Date(trip.startDate);
+                          const endDate = new Date(trip.endDate);
+                          
+                          // Check if dates are valid
+                          if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                            console.error('Invalid dates:', { startDate: trip.startDate, endDate: trip.endDate });
+                            return "Invalid date format";
+                          }
+                          
+                          return `${format(startDate, "MMM dd")} - ${format(endDate, "MMM dd, yyyy")}`;
+                        }
+                        return "Date not available";
+                      } catch (error) {
+                        console.error('Date formatting error:', error, { startDate: trip.startDate, endDate: trip.endDate });
+                        return "Date formatting error";
+                      }
+                    })()}
                   </div>
                   <Badge variant={trip.isPublic ? "default" : "secondary"}>
                     {trip.isPublic ? "Public" : "Private"}

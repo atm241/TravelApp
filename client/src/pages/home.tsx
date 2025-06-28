@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/header";
 import { DestinationCard } from "@/components/destination-card";
@@ -6,13 +6,30 @@ import { ActivityCard } from "@/components/activity-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, MapPin, Calendar, Flame, Mountain, Umbrella, Building, Trees } from "lucide-react";
-import type { Destination, Activity } from "@shared/schema";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Search, MapPin, Calendar, Flame, Mountain, Umbrella, Building, Trees, Check, ChevronsUpDown, Plane } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Destination, Activity } from "@shared";
+
+// Popular cities for autocomplete
+const popularCities = [
+  "New York, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX", "Phoenix, AZ",
+  "Philadelphia, PA", "San Antonio, TX", "San Diego, CA", "Dallas, TX", "San Jose, CA",
+  "London, UK", "Paris, France", "Tokyo, Japan", "Sydney, Australia", "Rome, Italy",
+  "Barcelona, Spain", "Amsterdam, Netherlands", "Berlin, Germany", "Dubai, UAE",
+  "Singapore", "Bangkok, Thailand", "Istanbul, Turkey", "Mumbai, India", "Seoul, South Korea",
+  "Mexico City, Mexico", "Buenos Aires, Argentina", "São Paulo, Brazil", "Cairo, Egypt",
+  "Marrakech, Morocco", "Cape Town, South Africa", "Bali, Indonesia", "Santorini, Greece"
+];
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("popular");
   const [searchDestination, setSearchDestination] = useState("");
-  const [searchDate, setSearchDate] = useState("");
+  const [arrivalDate, setArrivalDate] = useState("");
+  const [departureDate, setDepartureDate] = useState("");
+  const [cityOpen, setCityOpen] = useState(false);
+  const [filteredCities, setFilteredCities] = useState(popularCities);
 
   const { data: destinations = [], isLoading: destinationsLoading } = useQuery<Destination[]>({
     queryKey: ["/api/destinations", selectedCategory],
@@ -40,7 +57,9 @@ export default function Home() {
   ];
 
   const handleExploreSearch = () => {
-    console.log("Searching for:", searchDestination, "on:", searchDate);
+    console.log("Searching for:", searchDestination, "from:", arrivalDate, "to:", departureDate);
+    // You can add navigation logic here, for example:
+    // navigate(`/explore?destination=${encodeURIComponent(searchDestination)}&arrival=${arrivalDate}&departure=${departureDate}`);
   };
 
   return (
@@ -56,38 +75,105 @@ export default function Home() {
               Discover amazing destinations and create unforgettable memories
             </p>
             
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-4xl mx-auto">
               <div className="bg-white rounded-lg p-6 shadow-lg">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {/* City Autocomplete */}
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <MapPin className="w-4 h-4 inline mr-1" />
                       Where to?
                     </label>
-                    <Input
-                      type="text"
-                      placeholder="Enter destination"
-                      value={searchDestination}
-                      onChange={(e) => setSearchDestination(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 text-gray-900"
-                    />
+                    <Popover open={cityOpen} onOpenChange={setCityOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={cityOpen}
+                          className="w-full justify-between px-4 py-3 h-12 text-left text-gray-900"
+                        >
+                          {searchDestination || "Choose destination..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command>
+                          <CommandInput 
+                            placeholder="Search cities..." 
+                            onValueChange={(value) => {
+                              const filtered = popularCities.filter(city => 
+                                city.toLowerCase().includes(value.toLowerCase())
+                              );
+                              setFilteredCities(filtered);
+                            }}
+                          />
+                          <CommandEmpty>No cities found.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandList>
+                              {filteredCities.slice(0, 8).map((city) => (
+                                <CommandItem
+                                  key={city}
+                                  value={city}
+                                  onSelect={(currentValue) => {
+                                    setSearchDestination(currentValue === searchDestination ? "" : currentValue);
+                                    setCityOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      searchDestination === city ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {city}
+                                </CommandItem>
+                              ))}
+                            </CommandList>
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
-                  <div className="flex-1">
+                  
+                  {/* Arrival Date */}
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      When?
+                      <Plane className="w-4 h-4 inline mr-1" />
+                      Arrival
                     </label>
                     <Input
                       type="date"
-                      value={searchDate}
-                      onChange={(e) => setSearchDate(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 text-gray-900"
+                      value={arrivalDate}
+                      onChange={(e) => setArrivalDate(e.target.value)}
+                      className="w-full px-4 py-3 h-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 text-gray-900"
                     />
                   </div>
+                  
+                  {/* Departure Date */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <Plane className="w-4 h-4 inline mr-1 rotate-45" />
+                      Departure
+                    </label>
+                    <Input
+                      type="date"
+                      value={departureDate}
+                      onChange={(e) => setDepartureDate(e.target.value)}
+                      min={arrivalDate} // Departure can't be before arrival
+                      className="w-full px-4 py-3 h-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 text-gray-900"
+                    />
+                  </div>
+                </div>
+                
+                {/* Search Button */}
+                <div className="mt-4 text-center">
                   <Button 
                     onClick={handleExploreSearch}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 self-end"
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-12 py-3 text-lg"
+                    disabled={!searchDestination || !arrivalDate || !departureDate}
                   >
-                    <Search className="w-4 h-4 mr-2" />
-                    Explore
+                    <Search className="w-5 h-5 mr-2" />
+                    Search Trips
                   </Button>
                 </div>
               </div>

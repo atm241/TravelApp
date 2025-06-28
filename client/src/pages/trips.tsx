@@ -12,8 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Calendar, MapPin, Users, Trash2, Edit, Sparkles } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTripSchema } from "@shared/schema";
-import type { Trip, Activity } from "@shared/schema";
+import { insertTripSchema, type Trip } from "@shared";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -334,7 +333,25 @@ export default function Trips() {
                     
                     <div className="flex items-center text-sm text-gray-600">
                       <Calendar className="w-4 h-4 mr-2" />
-                      {format(new Date(trip.startDate), "MMM dd")} - {format(new Date(trip.endDate), "MMM dd, yyyy")}
+                      {(() => {
+                        try {
+                          if (trip.startDate && trip.endDate) {
+                            const startDate = new Date(trip.startDate);
+                            const endDate = new Date(trip.endDate);
+                            
+                            // Check if dates are valid
+                            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                              return "Invalid date";
+                            }
+                            
+                            return `${format(startDate, "MMM dd")} - ${format(endDate, "MMM dd, yyyy")}`;
+                          }
+                          return "Date not available";
+                        } catch (error) {
+                          console.error('Date formatting error:', error);
+                          return "Date formatting error";
+                        }
+                      })()}
                     </div>
 
                     {trip.description && (

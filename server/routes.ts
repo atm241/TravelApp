@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTripSchema, insertTripItemSchema } from "@shared/schema";
+import { insertTripSchema, insertTripItemSchema } from "../shared/schema-local.js";
 import { generateTripRecommendations, findSimilarActivities } from "./ai-recommendations";
 import { z } from "zod";
 

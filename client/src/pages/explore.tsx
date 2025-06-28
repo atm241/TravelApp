@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Filter, Grid, List } from "lucide-react";
-import type { Destination, Activity } from "@shared/schema";
+import type { Destination } from "@shared";
 
 export default function Explore() {
   const [searchQuery, setSearchQuery] = useState("");

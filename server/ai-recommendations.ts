@@ -1,9 +1,9 @@
 import OpenAI from "openai";
 import { storage } from "./storage";
-import type { Destination, Activity } from "@shared/schema";
+import type { Destination, Activity } from "../shared/schema-local.js";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 interface TripRecommendation {
   activities: string[];
@@ -12,12 +12,50 @@ interface TripRecommendation {
   tips: string[];
 }
 
+function getFallbackRecommendations(): TripRecommendation {
+  return {
+    activities: [
+      "Explore local markets and street food",
+      "Take a guided walking tour",
+      "Visit popular museums and galleries",
+      "Experience local transportation",
+      "Photography tour of iconic spots"
+    ],
+    attractions: [
+      "Historic city center",
+      "Popular viewpoints and observation decks",
+      "Cultural landmarks and monuments",
+      "Beautiful parks and gardens",
+      "Traditional neighborhoods"
+    ],
+    restaurants: [
+      "Highly-rated local restaurant",
+      "Traditional cuisine experience",
+      "Popular street food market",
+      "Rooftop dining with a view",
+      "Local specialty restaurant"
+    ],
+    tips: [
+      "Check local weather and pack accordingly",
+      "Learn basic greetings in the local language",
+      "Research local customs and etiquette",
+      "Book popular attractions in advance",
+      "Keep digital and physical copies of documents"
+    ]
+  };
+}
+
 export async function generateTripRecommendations(
   destination: string,
   description: string,
   startDate: string,
   endDate: string
 ): Promise<TripRecommendation> {
+  if (!openai) {
+    console.log('OpenAI API not configured, using fallback recommendations');
+    return getFallbackRecommendations();
+  }
+
   try {
     const durationDays = Math.ceil(
       (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)
@@ -103,6 +141,11 @@ export async function findSimilarActivities(description: string): Promise<Activi
     
     if (allActivities.length === 0) {
       return [];
+    }
+
+    if (!openai) {
+      console.log('OpenAI API not configured, returning first few activities');
+      return allActivities.slice(0, 3);
     }
 
     const prompt = `

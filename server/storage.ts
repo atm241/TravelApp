@@ -5,7 +5,7 @@ import {
   type Activity, type InsertActivity,
   type Trip, type InsertTrip,
   type TripItem, type InsertTripItem
-} from "@shared/schema";
+} from "../shared/schema-local.js";
 import { db } from "./db";
 import { eq, like, or } from "drizzle-orm";
 
@@ -125,6 +125,7 @@ export class DatabaseStorage implements IStorage {
 
   async getTrip(id: number): Promise<Trip | undefined> {
     const [trip] = await db.select().from(trips).where(eq(trips.id, id));
+    console.log('Trip data from DB:', trip);
     return trip || undefined;
   }
 
