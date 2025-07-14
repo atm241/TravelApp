@@ -36,7 +36,7 @@ export default function Trips() {
   const queryClient = useQueryClient();
 
   const { data: trips = [], isLoading } = useQuery<Trip[]>({
-    queryKey: ["/api/trips", 1], // Using userId = 1 for demo
+    queryKey: ["/api/trips?userId=1"], // Using userId = 1 for demo
   });
 
   const createTripMutation = useMutation({
@@ -45,7 +45,7 @@ export default function Trips() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trips?userId=1"] });
       setIsCreateDialogOpen(false);
       reset();
       toast({
@@ -67,7 +67,7 @@ export default function Trips() {
       await apiRequest("DELETE", `/api/trips/${tripId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/trips?userId=1"] });
       toast({
         title: "Success",
         description: "Trip deleted successfully!",

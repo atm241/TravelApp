@@ -144,7 +144,8 @@ export class DatabaseStorage implements IStorage {
     await db.delete(tripItems).where(eq(tripItems.tripId, id));
     // Delete the trip
     const result = await db.delete(trips).where(eq(trips.id, id));
-    return result.rowCount > 0;
+    // For SQLite with better-sqlite3, check changes property
+    return result.changes > 0;
   }
 
   async getTripItems(tripId: number): Promise<TripItem[]> {
@@ -165,7 +166,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTripItem(id: number): Promise<boolean> {
     const result = await db.delete(tripItems).where(eq(tripItems.id, id));
-    return result.rowCount > 0;
+    return result.changes > 0;
   }
 }
 

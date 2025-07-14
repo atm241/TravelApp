@@ -22,12 +22,12 @@ export default function TripDetail() {
   const queryClient = useQueryClient();
 
   const { data: trip, isLoading: tripLoading } = useQuery<Trip>({
-    queryKey: ["/api/trips", tripId],
+    queryKey: [`/api/trips/${tripId}`],
     enabled: !!tripId,
   });
 
   const { data: tripItems = [], isLoading: itemsLoading } = useQuery<TripItem[]>({
-    queryKey: ["/api/trips", tripId, "items"],
+    queryKey: [`/api/trips/${tripId}/items`],
     enabled: !!tripId,
   });
 
@@ -37,7 +37,7 @@ export default function TripDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/trips", tripId, "items"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/items`] });
       toast({
         title: "Success",
         description: "Activity added to your trip!",
@@ -58,7 +58,7 @@ export default function TripDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/trips", tripId, "items"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/items`] });
       toast({
         title: "Success",
         description: "Activity updated successfully!",
@@ -78,7 +78,7 @@ export default function TripDetail() {
       await apiRequest("DELETE", `/api/trip-items/${itemId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/trips", tripId, "items"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/trips/${tripId}/items`] });
       toast({
         title: "Success",
         description: "Activity removed from your trip!",
@@ -265,6 +265,7 @@ export default function TripDetail() {
                   description: description,
                   day: Math.max(...tripItems.map(ti => ti.day), 0) + 1,
                   time: "",
+                  endTime: "",
                   order: 1,
                   type: type
                 };
@@ -285,6 +286,7 @@ export default function TripDetail() {
                   description: item.description,
                   day: Math.max(...tripItems.map(ti => ti.day), 0) + 1,
                   time: "",
+                  endTime: "",
                   order: 1,
                   type: "activity"
                 };

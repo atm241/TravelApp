@@ -27,6 +27,7 @@ export function TripPlanner({
     description: "",
     day: 1,
     time: "",
+    endTime: "",
     type: "activity"
   });
 
@@ -46,6 +47,7 @@ export function TripPlanner({
       description: "",
       day: 1,
       time: "",
+      endTime: "",
       type: "activity"
     });
   };
@@ -89,8 +91,16 @@ export function TripPlanner({
                 />
                 <Input
                   type="time"
+                  placeholder="Start time"
                   value={newItem.time}
                   onChange={(e) => setNewItem({ ...newItem, time: e.target.value })}
+                  className="flex-1"
+                />
+                <Input
+                  type="time"
+                  placeholder="End time (optional)"
+                  value={newItem.endTime}
+                  onChange={(e) => setNewItem({ ...newItem, endTime: e.target.value })}
                   className="flex-1"
                 />
               </div>
@@ -144,10 +154,13 @@ export function TripPlanner({
                           
                           <div className="flex items-center gap-4 text-sm text-purple-600">
                             <span className="font-medium">Day {item.day}</span>
-                            {item.time && (
+                            {(item.time || item.endTime) && (
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
-                                {item.time}
+                                {item.time && item.endTime 
+                                  ? `${item.time} - ${item.endTime}`
+                                  : item.time || `Until ${item.endTime}`
+                                }
                               </span>
                             )}
                           </div>

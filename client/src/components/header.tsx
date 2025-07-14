@@ -14,10 +14,68 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { insertTripSchema, type Trip } from "@shared";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import type { z } from "zod";
+
+type TripFormData = z.infer<typeof insertTripSchema>;
 
 export function Header() {
   const [location] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateTripOpen, setIsCreateTripOpen] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<TripFormData>({
+    resolver: zodResolver(insertTripSchema),
+    defaultValues: {
+      userId: 1, // Default user ID for now
+      isPublic: false,
+    },
+  });
+
+  const createTripMutation = useMutation({
+    mutationFn: async (data: TripFormData) => {
+      const response = await fetch("/api/trips", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create trip");
+      }
+
+      return response.json();
+    },
+    onSuccess: (trip: Trip) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/trips?userId=1"] });
+      toast({
+        title: "Trip created successfully!",
+        description: `Your trip to ${trip.destination} has been created.`,
+      });
+      setIsCreateTripOpen(false);
+      reset();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to create trip",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmitTrip = (data: TripFormData) => {
+    createTripMutation.mutate(data);
+  };
 
   const navigation = [
     { name: "Explore", href: "/" },
@@ -67,10 +125,108 @@ export function Header() {
               </div>
             </div>
             
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white font-medium">
-              <Plus className="w-4 h-4 mr-2" />
-              New Trip
-            </Button>
+            <Dialog open={isCreateTripOpen} onOpenChange={setIsCreateTripOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white font-medium">
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Trip
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Create New Trip</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit(onSubmitTrip)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Trip Title</Label>
+                    <Input
+                      id="title"
+                      {...register("title")}
+                      placeholder="My Amazing Trip"
+                    />
+                    {errors.title && (
+                      <p className="text-sm text-red-600">{errors.title.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="destination">Destination</Label>
+                    <Input
+                      id="destination"
+                      {...register("destination")}
+                      placeholder="Paris, France"
+                    />
+                    {errors.destination && (
+                      <p className="text-sm text-red-600">{errors.destination.message}</p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="startDate">Start Date</Label>
+                      <Input
+                        id="startDate"
+                        type="date"
+                        {...register("startDate")}
+                      />
+                      {errors.startDate && (
+                        <p className="text-sm text-red-600">{errors.startDate.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="endDate">End Date</Label>
+                      <Input
+                        id="endDate"
+                        type="date"
+                        {...register("endDate")}
+                      />
+                      {errors.endDate && (
+                        <p className="text-sm text-red-600">{errors.endDate.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description (Optional)</Label>
+                    <Textarea
+                      id="description"
+                      {...register("description")}
+                      placeholder="Tell us about your trip plans..."
+                      rows={3}
+                    />
+                    {errors.description && (
+                      <p className="text-sm text-red-600">{errors.description.message}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="isPublic"
+                      {...register("isPublic")}
+                    />
+                    <Label htmlFor="isPublic">Make this trip public</Label>
+                  </div>
+
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsCreateTripOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      {isSubmitting ? "Creating..." : "Create Trip"}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
             
             <div className="w-8 h-8 bg-purple-50 rounded-full flex items-center justify-center">
               <User className="text-purple-600 w-4 h-4" />

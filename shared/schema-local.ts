@@ -52,6 +52,7 @@ export const tripItems = sqliteTable("trip_items", {
   description: text("description"),
   day: integer("day").notNull(),
   time: text("time"),
+  endTime: text("end_time"), // Optional recommended end time
   order: integer("order").notNull(),
   type: text("type").notNull().default("activity"), // activity, accommodation, transport
 });
